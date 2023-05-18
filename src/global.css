@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.focusInput {
+    @apply focus:border-purple outline-none border-solid border-2
+}
+
+html, body{
+    @apply font-body
+}
