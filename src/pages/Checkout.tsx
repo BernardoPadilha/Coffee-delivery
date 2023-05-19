@@ -20,20 +20,31 @@ import {
 
 const newPurchaseValidationSchema = z.object({
   CEP: z
-    .number()
-    .min(8, 'Informe o CEP corretamente')
-    .max(8, 'Informe o CEP corretamente'),
-  street: z.string().min(1, 'Digite o nome da sua rua'),
-  houseNumber: z.number().min(1, 'Digite o número da sua casa'),
+    .string()
+    .nonempty('O CEP é obrigatório')
+    .max(9, 'Formato de CEP errado'),
+  street: z.
+    string()
+    .nonempty('Digite o nome da sua rua')
+    .transform(street => {
+      return street.trim().split(' ').map(word => {
+        return word[0].toLocaleUpperCase().concat(word.substring(1));
+      }).join(' ')
+    }),
+  houseNumber: z.string().nonempty('Digite o número da sua casa'),
   complement: z.string().optional(),
-  district: z.string().min(1, 'Digite em qual bairro você mora'),
-  state: z.string().min(1, 'Digite em qual estado você mora'),
+  district: z.string().nonempty('Digite em qual bairro você mora'),
+  state: z.string().nonempty('Digite em qual estado você mora'),
   UF: z
     .string()
     .min(2, 'Digite a UF de seu estado')
     .max(2, 'Digite a UF de seu estado'),
 });
+type NewPurchaseData = Zod.infer<typeof newPurchaseValidationSchema>
 
+interface PurchaseProps {
+  form: NewPurchaseData,
+}
 interface ProductProps {
   id: number;
   quantity: number;
@@ -43,9 +54,23 @@ export function Checkout() {
   const { products, removeProduct, updateProductAmount } =
     useContext(ProductsContext);
 
-  const { register, handleSubmit } = useForm({
-    resolver: zodResolver(newPurchaseValidationSchema)
+  const { 
+    register, 
+    handleSubmit,
+    formState: { errors }
+  } = useForm<NewPurchaseData>({
+    resolver: zodResolver(newPurchaseValidationSchema),
+      defaultValues: {
+        CEP: '',
+        complement: '',
+        district: '',
+        houseNumber: '',
+        state: '',
+        street: '',
+        UF: '',
+      }
   });
+
 
   const total = formatPrice(
     products.reduce((sumTotal, product) => {
@@ -109,56 +134,79 @@ export function Checkout() {
           </div>
 
     
-            <div className="flex flex-col items-start justify-center">
-              <input
-                type="text"
-                placeholder="CEP"
-                className="w-[200px] p-3  h-[42px] mb-4 bg-input rounded focusInput"
-                {...register('CEP', { valueAsNumber: true })}
-              />
+            <div className="flex flex-col items-start justify-center gap-4">
+              <div className="flex flex-col">
+                <input
+                  type="text"
+                  placeholder="CEP"
+                  className="w-[200px] p-3  h-[42px]  bg-input rounded focusInput"
+                  {...register('CEP')}
+                />
+                {errors.CEP && <span className=" text-sm text-red-500">{errors.CEP.message}</span>}
+              </div>
 
-              <input
-                type="text"
-                placeholder="Rua"
-                className="w-[560px] p-3 h-[42px] mb-4 bg-input rounded focusInput"
-                {...register('street')}
-              />
+              <div className="flex flex-col">
+                <input
+                  type="text"
+                  placeholder="Rua"
+                  className="w-[560px] p-3 h-[42px]  bg-input rounded focusInput"
+                  {...register('street')}
+                />
+                {errors.street && <span className=" text-sm text-red-500">{errors.street.message}</span>}
+              </div>
             </div>
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Número"
-                className="w-[200px] p-3  h-[42px] mr-3 bg-input rounded focusInput"
-                {...register('houseNumber')}
-              />
-              <input
-                type="text"
-                placeholder="Complemento"
-                className="w-[348px] p-3  h-[42px] bg-input rounded focusInput"
-                {...register('complement')}
-              />
+
+            <div className="gap-4 flex mb-4 mt-4">
+              <div className="flex flex-col">
+                <input
+                  type="text"
+                  placeholder="Número"
+                  className="w-[200px] p-3  h-[42px] mr-3 bg-input rounded focusInput"
+                  {...register('houseNumber')}
+                />
+                {errors.houseNumber && <span className=" text-sm text-red-500">{errors.houseNumber.message}</span>}
+              </div>
+
+                <input
+                  type="text"
+                  placeholder="Complemento"
+                  className="w-[348px] p-3  h-[42px] bg-input rounded focusInput"
+                  {...register('complement')}
+                />
+
             </div>
-            <div className="">
-              <input
-                type="text"
-                placeholder="Bairro"
-                className="w-[200px] p-3  h-[42px] mr-3 bg-input rounded focusInput"
-                {...register('district')}
-              />
-              <input
-                type="text"
-                placeholder="Estado"
-                className="w-[276px] p-3  h-[42px] mr-3 bg-input rounded focusInput"
-                {...register('state')}
-              />
-              <input
-                type="text"
-                placeholder="UF"
-                className="w-[60px] p-3 h-[42px] bg-input rounded focusInput"
-                {...register('UF')}
-              />
+
+            <div className="flex">
+              <div className="flex flex-col">
+                <input
+                  type="text"
+                  placeholder="Bairro"
+                  className="w-[200px] p-3  h-[42px] mr-3 bg-input rounded focusInput"
+                  {...register('district')}
+                />
+                {errors.district && <span className=" text-sm text-red-500">{errors.district.message}</span>}
+              </div>
+              <div className="flex flex-col">
+                <input
+                  type="text"
+                  placeholder="Estado"
+                  className="w-[276px] p-3  h-[42px] mr-3 bg-input rounded focusInput"
+                  {...register('state')}
+                />
+                {errors.state && <span className=" text-sm text-red-500">{errors.state.message}</span>}
+              </div>
+              <div className="flex flex-col">
+                <input
+                  type="text"
+                  placeholder="UF"
+                  className="w-[60px] p-3 h-[42px] bg-input rounded focusInput"
+                  {...register('UF')}
+                />
+                {errors.UF && <span className=" text-sm text-red-500">{errors.UF.message}</span>}
+              </div>
             </div>
         </div>
+
         <div className="bg-card flex flex-col justify-start pt-10 mt-3 p-10 rounded-md ">
           <div className="flex items-start justify-start ">
             <CurrencyDollar size={24} color="#8047F8" className="mr-[8px]" />
@@ -267,8 +315,8 @@ export function Checkout() {
             </div>
 
             <button 
-              type="submit"
-              className="w-full h-[46px] bg-yellow text-white rounded-md mt-6">
+              type='submit'
+              className="w-full h-[46px] bg-yellow text-white rounded-md mt-6 hover:bg-yellowDark duration-200">
                 CONFIRMAR PEDIDO
             </button>
           </div>
