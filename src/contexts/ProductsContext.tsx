@@ -1,4 +1,6 @@
 import { ReactNode, createContext, useState } from 'react';
+import { NewPurchaseData } from '../pages/Checkout';
+import { formatPrice } from '../utils/format';
 
 interface ProductsContextProviderProps {
   children: ReactNode;
@@ -15,8 +17,15 @@ interface ProductProps {
   frete: number;
 }
 
+interface PurchaseProps {
+  address: NewPurchaseData;
+  total: string;
+}
+
 interface ProductsContextType {
+  total: string;
   products: ProductProps[];
+  purchase: PurchaseProps[];
   addProductInCart: (product: ProductProps) => void;
   updateProductAmount: ({
     productId,
@@ -26,6 +35,7 @@ interface ProductsContextType {
     amount: number;
   }) => void;
   removeProduct: (productId: number) => void;
+  // handleCreateNewPurchase: (data: NewPurchaseData) => void;
 }
 
 export const ProductsContext = createContext({} as ProductsContextType);
@@ -34,6 +44,7 @@ export function ProductsContextProvider({
   children,
 }: ProductsContextProviderProps) {
   const [products, setProducts] = useState<ProductProps[]>([]);
+  const [purchase, setPurchase] = useState<PurchaseProps[]>([]);
 
   function addProductInCart(product: ProductProps) {
     const findProducts = products.find((p) => p.id === product.id);
@@ -89,14 +100,40 @@ export function ProductsContextProvider({
     );
     setProducts(updateProducts);
   }
+  
+  // function handleCreateNewPurchase(data: PurchaseProps) {
+  //   const newPurchase = {
+  //     street: data.address.street,
+  //     houseNumber: data.address.houseNumber,
+  //     district: data.address.district,
+  //     state: data.address.state,
+  //     UF: data.address.UF,
+  //     productsBuy: products,
+  //     total: total,
+  //   };
+
+  //   setPurchase((state) =>[...state, newPurchase]);
+  //   //  reset()
+  // }
+  const total = formatPrice(
+    products.reduce((sumTotal, product) => {
+      sumTotal += product.price * product.quantity + product.frete;
+
+      return sumTotal;
+    }, 0)
+  );
+
 
   return (
     <ProductsContext.Provider
       value={{
         products,
+        purchase,
+        total,
         addProductInCart,
         updateProductAmount,
         removeProduct,
+        // handleCreateNewPurchase,
       }}
     >
       {children}
